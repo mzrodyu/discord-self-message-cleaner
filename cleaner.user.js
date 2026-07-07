@@ -86,6 +86,57 @@
 
   async function collectMessages(token, opts, meId, setStatus) {
     const msgs = [];
+    let go = true;
+    
+    // SERVER MODE: Hybrid Search-then-Scan
+    if (!opts.channelId && opts.guildId && opts.guildId !== '@me') {
+      let offset = 0;
+      while (go && msgs.length < opts.limit) {
+        let p = new URLSearchParams({ author_id: meId, offset: String(offset) });
+        if (opts.order === 'asc') p.set('sort_order', 'asc');
+        else p.set('sort_order', 'desc');
+        
+        if (opts.after) p.set('min_id', tsToSf(opts.after));
+        if (opts.before) p.set('max_id', tsToSf(opts.before));
+
+        setStatus('全服检索中', `正通过高级搜索 API 扫描... 已找到 ${msgs.length} 条 (受接口限速，速度较慢)`);
+        let res;
+        try {
+          res = await apiFetch(token, `/guilds/${opts.guildId}/messages/search?${p}`);
+        } catch(e) {
+          throw new Error(`全服检索失败: ${e.message}`);
+        }
+
+        if (res && res.message === 'Indexing') {
+          setStatus('索引中', 'Discord 正在为您建立全服索引，等待10秒后重试...');
+          await sleep(10000);
+          continue; // retry same offset
+        }
+
+        if (!res || !res.messages || res.messages.length === 0) break;
+        
+        for (const hit of res.messages) {
+          // 'hit' is an array of messages representing context, we want the one that hit the search query
+          const m = hit.find(msg => msg.hit === true) || hit.find(msg => msg.author?.id === meId) || hit[0];
+          if (!m) continue;
+
+          const t = new Date(m.timestamp || sfTime(m.id));
+          const inRange = (!opts.after || t >= opts.after) && (!opts.before || t <= opts.before);
+          
+          if (inRange && m.author?.id === meId) {
+             msgs.push(m);
+             if (msgs.length >= opts.limit) { go = false; break; }
+          }
+        }
+        
+        if (res.messages.length < 25) break; // Reached end of search results
+        offset += res.messages.length;
+        await sleep(1200); // strict rate limit for search API
+      }
+      return msgs;
+    }
+
+    // CHANNEL MODE: Standard Message Iteration
     let boundary = null;
     
     if (opts.order === 'desc') {
@@ -94,8 +145,9 @@
         boundary = opts.after ? tsToSf(opts.after) : '0';
     }
 
-    let go = true;
     while (go && msgs.length < opts.limit) {
+      if (!opts.channelId) throw new Error("频道 ID 不能为空（除非指定具体的服务器 ID 开启全服清理）");
+      
       const p = new URLSearchParams({ limit: '100' });
       if (boundary) p.set(opts.order === 'desc' ? 'before' : 'after', boundary);
       
@@ -713,15 +765,25 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
         await save();
         setStatus('校验中', '正在验证账号和频道…');
         const me = await apiFetch(token, '/users/@me');
-        const ch = await apiFetch(token, `/channels/${opts.channelId}`);
+        let chName = '全服扫描';
         
-        // 只有不是私信时才校验 guild_id
-        if (opts.guildId !== '@me' && String(ch.guild_id || '') !== opts.guildId) {
-          throw new Error('频道不属于填写的服务器。');
+        if (opts.channelId) {
+          const ch = await apiFetch(token, `/channels/${opts.channelId}`);
+          chName = ch.name || opts.channelId;
+          // 只有不是私信时才校验 guild_id
+          if (opts.guildId !== '@me' && String(ch.guild_id || '') !== opts.guildId) {
+            throw new Error('频道不属于填写的服务器。');
+          }
+        } else if (opts.guildId && opts.guildId !== '@me') {
+          // Verify guild
+          const g = await apiFetch(token, `/guilds/${opts.guildId}`);
+          chName = g.name || '全服';
+        } else {
+          throw new Error('请输入具体的频道ID，或者填写具体的服务器ID进行全服扫描！');
         }
 
         const dirStr = opts.order === 'asc' ? '从老到新' : '从新到老';
-        setStatus('预览中', `账号 ${me.username}，频道 ${ch.name || opts.channelId} (${dirStr})`);
+        setStatus('预览中', `账号 ${me.username}，频道 ${chName} (${dirStr})`);
         
         const msgs = await collectMessages(token, opts, me.id, setStatus);
         st.previewCtx = { opts, meId: me.id };
