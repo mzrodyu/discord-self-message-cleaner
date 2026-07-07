@@ -226,7 +226,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
     
     <div class="g2">
       <div><div class="fl">最多删除</div><input id="limit" type="number" min="1" max="5000" value="100"></div>
-      <div><div class="fl">间隔(ms)</div><input id="delay" type="number" min="800" max="30000" step="100" value="1600"></div>
+      <div><div class="fl">间隔(ms)</div><input id="delay" type="number" min="100" max="30000" step="100" value="1600"></div>
     </div>
     
     <div class="g2">
@@ -322,7 +322,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       if (!/^\d{15,25}$/.test(channelId)) throw new Error('频道 ID 格式不对。');
       if (!$('disclaimer').checked) throw new Error('请先勾选免责声明。');
       const limit = Math.min(Math.max(Number($('limit').value) || 100, 1), 5000);
-      const delayMs = Math.min(Math.max(Number($('delay').value) || 1600, 800), 30000);
+      const delayMs = Math.min(Math.max(Number($('delay').value) || 1600, 100), 30000);
       const after = $('after').value ? new Date($('after').value) : null;
       const before = $('before').value ? new Date($('before').value) : null;
       if (after && before && after >= before) throw new Error('起始时间必须早于结束时间。');
@@ -619,7 +619,10 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
           await apiFetch(token, `/channels/${st.previewCtx.opts.channelId}/messages/${m.id}`, { method: 'DELETE' });
           done++;
           setStatus('删除中', `已删除 ${done}/${st.previewed.length} 条。`);
-          await sleep(st.previewCtx.opts.delayMs);
+          
+          // 动态读取最新的间隔时间，允许中途调速
+          const currentDelay = Math.min(Math.max(Number($('delay').value) || 1600, 100), 30000);
+          await sleep(currentDelay);
         }
         renderMessages([]);
         st.previewCtx = null;
