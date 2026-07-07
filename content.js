@@ -617,7 +617,11 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
         const token = getToken();
         for (const m of st.previewed) {
           const t0 = Date.now();
-          await apiFetch(token, `/channels/${st.previewCtx.opts.channelId}/messages/${m.id}`, { method: 'DELETE' });
+          try {
+            await apiFetch(token, `/channels/${st.previewCtx.opts.channelId}/messages/${m.id}`, { method: 'DELETE' });
+          } catch (err) {
+            if (!err.message.includes('API 404')) throw err;
+          }
           done++;
           setStatus('删除中', `已删除 ${done}/${st.previewed.length} 条。`);
           
