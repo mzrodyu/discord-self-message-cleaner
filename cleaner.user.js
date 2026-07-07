@@ -459,7 +459,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       const guildId = $('guildId').value.trim();
       const channelId = $('channelId').value.trim();
       if (!/^(\d{15,25}|@me)$/.test(guildId)) throw new Error('服务器 ID 格式不对。');
-      if (!/^\d{15,25}$/.test(channelId)) throw new Error('频道 ID 格式不对。');
+      if (channelId && !/^\d{15,25}$/.test(channelId)) throw new Error('频道 ID 格式不对。');
       if (!$('disclaimer').checked) throw new Error('请先勾选免责声明。');
       const limit = Math.min(Math.max(Number($('limit').value) || 100, 1), 5000);
       const delayMs = Math.min(Math.max(Number($('delay').value) || 1600, 100), 30000);
