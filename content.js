@@ -366,7 +366,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
     function readOpts() {
       const guildId = $('guildId').value.trim();
       const channelId = $('channelId').value.trim();
-      if (!/^\d{15,25}$|@me/.test(guildId)) throw new Error('服务器 ID 格式不对。');
+      if (!/^(\d{15,25}|@me)$/.test(guildId)) throw new Error('服务器 ID 格式不对。');
       if (!/^\d{15,25}$/.test(channelId)) throw new Error('频道 ID 格式不对。');
       if (!$('disclaimer').checked) throw new Error('请先勾选免责声明。');
       const limit = Math.min(Math.max(Number($('limit').value) || 100, 1), 5000);
@@ -410,15 +410,26 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
 
     /* save/restore */
     async function save() {
-      await chrome.storage.local.set({ cleanerOpts: {
+      const data = {
         guildId: $('guildId').value, channelId: $('channelId').value,
         limit: $('limit').value, delayMs: $('delay').value,
         after: $('after').value, before: $('before').value,
-        order: root.querySelector('input[name="order"]:checked').value
-      }});
+        order: root.querySelector('input[name="order"]:checked')?.value || 'desc'
+      };
+      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+        await chrome.storage.local.set({ cleanerOpts: data }).catch(() => {});
+      } else {
+        localStorage.setItem('cleanerOpts', JSON.stringify(data));
+      }
     }
     async function restore() {
-      const { cleanerOpts: o = {} } = await chrome.storage.local.get('cleanerOpts');
+      let o = {};
+      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+        const res = await chrome.storage.local.get('cleanerOpts').catch(() => ({}));
+        o = res.cleanerOpts || {};
+      } else {
+        try { o = JSON.parse(localStorage.getItem('cleanerOpts') || '{}'); } catch (e) {}
+      }
       if (o.guildId) $('guildId').value = o.guildId;
       if (o.channelId) $('channelId').value = o.channelId;
       if (o.limit) $('limit').value = o.limit;
@@ -671,23 +682,25 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
   }
 
   /* ── message listener ── */
-  chrome.runtime.onMessage.addListener((msg, _sender, respond) => {
-    if (msg?.type === 'TOGGLE_PANEL') {
-      const host = document.getElementById(HOST_ID);
-      if (host?.shadowRoot?._toggle) {
-        host.shadowRoot._toggle();
-      } else {
-        inject();
-        setTimeout(() => {
-          const h = document.getElementById(HOST_ID);
-          if (h?.shadowRoot?._toggle) h.shadowRoot._toggle();
-        }, 100);
+  if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
+    chrome.runtime.onMessage.addListener((msg, _sender, respond) => {
+      if (msg?.type === 'TOGGLE_PANEL') {
+        const host = document.getElementById(HOST_ID);
+        if (host?.shadowRoot?._toggle) {
+          host.shadowRoot._toggle();
+        } else {
+          inject();
+          setTimeout(() => {
+            const h = document.getElementById(HOST_ID);
+            if (h?.shadowRoot?._toggle) h.shadowRoot._toggle();
+          }, 100);
+        }
+        respond({ ok: true });
+        return false;
       }
-      respond({ ok: true });
       return false;
-    }
-    return false;
-  });
+    });
+  }
 
   /* ── boot ── */
   if (document.readyState === 'loading') {
