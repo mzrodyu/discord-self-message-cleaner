@@ -348,6 +348,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
           <div style="font-size:13px;color:#949ba4;">当前范围总发言数</div>
           <div class="stat-num" id="stat-result">-</div>
           <div style="font-size:11px;color:#80848e;">*调用高级检索接口，可能受风控影响。</div>
+          <div id="stat-err-msg" style="color:#da373c;font-size:12px;margin-top:8px;"></div>
         </div>
         <button class="bd" id="stat-del-btn" style="display:none;width:100%">将此作为目标进行清理</button>
       </div>
@@ -793,11 +794,25 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       setStatus('查询中', '正在调用高级检索接口...');
       try {
         const res = await apiFetch(getToken(), path);
+        
+        if (res && res.message === 'Indexing') {
+          root.getElementById('stat-result').innerText = '索引中';
+          root.getElementById('stat-result').style.fontSize = '32px';
+          root.getElementById('stat-err-msg').innerText = 'Discord 正在为您建立全服索引，这可能需要几分钟，请稍后再查。';
+          setStatus('查询中', 'Discord 返回 202 Indexing...');
+          return;
+        }
+
         root.getElementById('stat-result').innerText = res.total_results || 0;
+        root.getElementById('stat-result').style.fontSize = '48px';
+        root.getElementById('stat-err-msg').innerText = '';
         setStatus('查询成功', `找到 ${res.total_results} 条发言。`);
         if (res.total_results > 0) root.getElementById('stat-del-btn').style.display = 'flex';
         else root.getElementById('stat-del-btn').style.display = 'none';
       } catch (e) {
+        root.getElementById('stat-result').innerText = '错误';
+        root.getElementById('stat-result').style.fontSize = '32px';
+        root.getElementById('stat-err-msg').innerText = e.message;
         setStatus('查询失败', e.message);
       }
     });
