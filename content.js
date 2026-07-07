@@ -490,7 +490,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
         let iconHtml = '';
         if (type === 'guilds') {
           if (it.id === '@me') {
-            iconHtml = '💬';
+            iconHtml = '@';
           } else if (it.icon) {
             iconHtml = `<img src="https://cdn.discordapp.com/icons/${it.id}/${it.icon}.png?size=64">`;
           } else {
@@ -499,9 +499,9 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
         } else {
           // channels
           iconHtml = '#';
-          if (it.type === 2) iconHtml = '🔊'; // voice
-          if (it.type === 1) iconHtml = '👤'; // DM
-          if (it.type === 3) iconHtml = '👥'; // Group DM
+          if (it.type === 2) iconHtml = 'V'; // voice
+          if (it.type === 1) iconHtml = 'U'; // DM
+          if (it.type === 3) iconHtml = 'G'; // Group DM
         }
 
         div.innerHTML = `
