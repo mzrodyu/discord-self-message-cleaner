@@ -671,9 +671,10 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
         } else {
           // channels
           iconHtml = '#';
-          if (it.type === 2) iconHtml = 'V'; // voice
-          if (it.type === 1) iconHtml = 'U'; // DM
-          if (it.type === 3) iconHtml = 'G'; // Group DM
+          if (it.type === 'server_wide') iconHtml = '🌐';
+          else if (it.type === 2) iconHtml = 'V'; // voice
+          else if (it.type === 1) iconHtml = 'U'; // DM
+          else if (it.type === 3) iconHtml = 'G'; // Group DM
         }
 
         div.innerHTML = `
@@ -747,6 +748,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
           channels = rawChannels.filter(c => c.type !== 4).map(c => ({
             id: c.id, name: c.name, type: c.type
           }));
+          channels.unshift({ id: '', name: '--- 全服扫描清理 (不限频道) ---', type: 'server_wide' });
         }
         renderList(channels, 'channels');
       } catch (e) {
