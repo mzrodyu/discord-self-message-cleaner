@@ -101,51 +101,6 @@
     return msgs;
   }
 
-  /* ── UI-mode delete (DOM clicking) ── */
-  const vis = el => { if (!el) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
-  const candidates = () => Array.from(document.querySelectorAll('[id^="chat-messages-"]')).filter(n => n instanceof HTMLElement).filter(vis);
-  const isOwn = msg => {
-    if (msg.querySelector('img[class*="avatar"]')) return true;
-    return Array.from(msg.querySelectorAll('[role="button"],button')).some(b =>
-      /delete|删除/i.test((b.getAttribute('aria-label') || '') + ' ' + (b.textContent || '')));
-  };
-  const findBtn = (msg, re) => Array.from(msg.querySelectorAll('[role="button"],button')).find(b => re.test(b.getAttribute('aria-label') || b.textContent || ''));
-  const findMenuItem = re => Array.from(document.querySelectorAll('[role="menuitem"],[role="button"],button')).find(i => re.test((i.getAttribute('aria-label') || '') + ' ' + (i.textContent || '')));
-  const click = el => { el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })); el.click(); };
-
-  async function uiDeleteOne(msg) {
-    msg.scrollIntoView({ block: 'center' }); await sleep(180); click(msg); await sleep(180);
-    const more = findBtn(msg, /more|更多/i); if (!more) return false;
-    click(more); await sleep(260);
-    const del = findMenuItem(/delete message|删除消息|delete|删除/i);
-    if (!del) { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); return false; }
-    click(del); await sleep(360);
-    const confirm = findMenuItem(/^delete$|^删除$/i); if (!confirm) return false;
-    click(confirm); return true;
-  }
-
-  async function runUiMode(opts, setStatus) {
-    st.running = true; st.stopRequested = false; st.deleted = 0;
-    setStatus('运行中', '正在扫描当前频道…');
-    while (!st.stopRequested && st.deleted < opts.limit) {
-      const msgs = candidates().filter(isOwn).reverse();
-      let pass = 0;
-      for (const m of msgs) {
-        if (st.stopRequested || st.deleted >= opts.limit) break;
-        if (await uiDeleteOne(m)) { st.deleted++; pass++; setStatus('运行中', `已删除 ${st.deleted} 条。`); await sleep(opts.delayMs); }
-      }
-      if (!pass) {
-        if (!opts.autoScroll) break;
-        const list = document.querySelector('[data-list-id="chat-messages"]');
-        (list || window).scrollBy({ top: -(list ? list.clientHeight : window.innerHeight) * 0.85, behavior: 'smooth' });
-        await sleep(1300);
-      }
-    }
-    const stopped = st.stopRequested;
-    st.running = false; st.stopRequested = false;
-    setStatus(stopped ? '已停止' : '完成', `本轮删除 ${st.deleted} 条。`);
-  }
-
   /* ── CSS ── */
   const CSS = `
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -298,15 +253,6 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       </button>
       <button class="bd" id="delete-btn" disabled>
         <svg viewBox="0 0 24 24"><path d="M7.5 4.5h9M9 8h6l-.5 10.5a1.8 1.8 0 0 1-1.8 1.7h-1.4a1.8 1.8 0 0 1-1.8-1.7L9 8ZM10.8 10.5v7M13.2 10.5v7"/></svg>删除预览
-      </button>
-    </div>
-    
-    <div class="g2b">
-      <button class="bw" id="ui-start">
-        <svg viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5-10-6.5Z"/></svg>免Token当前删除
-      </button>
-      <button class="bw" id="ui-stop">
-        <svg viewBox="0 0 24 24"><path d="M7 7h10v10H7z"/></svg>停止当前
       </button>
     </div>
     
@@ -681,15 +627,6 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       } catch (e) { setStatus('失败', e.message); }
       finally { st.deleting = false; $('preview-btn').disabled = false; }
     });
-
-    /* UI mode */
-    $('ui-start').addEventListener('click', async () => {
-      if (st.running) { setStatus('已在运行', '如需停止请点「停止当前」。'); return; }
-      const limit = Math.min(Math.max(Number($('limit').value) || 100, 1), 500);
-      const delayMs = Math.min(Math.max(Number($('delay').value) || 1600, 800), 10000);
-      runUiMode({ limit, delayMs, autoScroll: true }, setStatus);
-    });
-    $('ui-stop').addEventListener('click', () => { st.stopRequested = true; setStatus('正在停止…', ''); });
 
     /* init */
     restore().then(() => {
