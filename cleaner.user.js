@@ -102,7 +102,7 @@
         setStatus('全服检索中', `正通过高级搜索 API 扫描... 已找到 ${msgs.length} 条 (受接口限速，速度较慢)`);
         let res;
         try {
-          res = await apiFetch(token, `/guilds/${opts.guildId}/messages/search?${p}`);
+          res = await apiFetch(token, `/guilds/${opts.guildId}/messages/search?include_nsfw=true&${p}`);
         } catch(e) {
           throw new Error(`全服检索失败: ${e.message}`);
         }
@@ -808,7 +808,8 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
         for (const m of st.previewed) {
           const t0 = Date.now();
           try {
-            await apiFetch(token, `/channels/${st.previewCtx.opts.channelId}/messages/${m.id}`, { method: 'DELETE' });
+            const delCid = m.channel_id || st.previewCtx.opts.channelId;
+            await apiFetch(token, `/channels/${delCid}/messages/${m.id}`, { method: 'DELETE' });
           } catch (err) {
             if (!err.message.includes('API 404')) throw err;
           }
@@ -846,10 +847,10 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       let meId = '1';
       try { meId = (await apiFetch(getToken(), '/users/@me')).id; } catch(e) { setStatus('错误', 'Token 无效'); return; }
       
-      let path = `/guilds/${gid}/messages/search?author_id=${meId}`;
+      let path = `/guilds/${gid}/messages/search?author_id=${meId}&include_nsfw=true`;
       if (!gid || gid === '@me') {
         if (!cid) { setStatus('错误', '查私信请填写频道ID'); return; }
-        path = `/channels/${cid}/messages/search?author_id=${meId}`;
+        path = `/channels/${cid}/messages/search?author_id=${meId}&include_nsfw=true`;
       } else if (cid) {
         path += `&channel_id=${cid}`;
       }
