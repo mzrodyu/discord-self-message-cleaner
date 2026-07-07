@@ -370,6 +370,9 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       <span id="pk-title">选择服务器</span>
       <button class="xbtn" id="pk-close">✕</button>
     </div>
+    <div style="padding:10px 12px; border-bottom:1px solid #111214; background:#2b2d31;">
+      <input type="text" id="pk-search" placeholder="搜索频道或服务器名称..." style="width:100%; padding:8px 10px; font-size:12px; border-radius:6px; background:#1e1f22; border:none; outline:none; color:#dbdee1;">
+    </div>
     <div class="pk-list" id="pk-list"></div>
   </div>
 
@@ -555,10 +558,13 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
     let pkState = 'guilds'; // 'guilds' | 'channels'
     let pkCurrentGuild = null; // { id, name }
     let pkTarget = 'basic'; // 'basic' | 'stats'
+    let pkCurrentItems = [];
+    let pkCurrentType = 'guilds';
 
     function openPicker(target = 'basic') {
       pkTarget = target;
       picker.classList.remove('hidden');
+      root.getElementById('pk-search').value = '';
       loadGuilds();
     }
 
@@ -577,7 +583,20 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       if (pkState === 'channels') loadGuilds();
     });
 
+    $('pk-search').addEventListener('input', e => {
+      const q = e.target.value.trim().toLowerCase();
+      if (!q) return _renderFilteredList(pkCurrentItems, pkCurrentType);
+      const filtered = pkCurrentItems.filter(it => (it.name || it.id || '').toLowerCase().includes(q) || (it.id === '@me' && '私信私聊'.includes(q)));
+      _renderFilteredList(filtered, pkCurrentType);
+    });
+
     function renderList(items, type) {
+      pkCurrentItems = items;
+      pkCurrentType = type;
+      _renderFilteredList(items, type);
+    }
+
+    function _renderFilteredList(items, type) {
       pkList.innerHTML = '';
       if (!items.length) {
         pkList.innerHTML = '<div class="pk-empty">没有找到项目</div>';
@@ -655,6 +674,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       pkCurrentGuild = { id: guildId, name: guildName };
       pkTitle.textContent = guildName;
       pkBack.style.visibility = 'visible';
+      root.getElementById('pk-search').value = '';
       pkList.innerHTML = '<div class="pk-empty">正在加载...</div>';
 
       try {
