@@ -48,15 +48,23 @@
 
   /* ── Discord API ── */
   async function apiFetch(token, path, opts = {}, attempt = 0) {
-    const res = await fetch(API_BASE + path, {
-      ...opts,
-      headers: { Authorization: token, 'Content-Type': 'application/json', ...(opts.headers || {}) },
-    });
+    let res;
+    try {
+      res = await fetch(API_BASE + path, {
+        ...opts,
+        headers: { Authorization: token, 'Content-Type': 'application/json', ...(opts.headers || {}) },
+      });
+    } catch (e) {
+      // 网络错误断线重连
+      if (attempt < 5) { await sleep(3000); return apiFetch(token, path, opts, attempt + 1); }
+      throw new Error(`网络请求失败: ${e.message}`);
+    }
+    
     if (res.status === 429) {
       const j = await res.json().catch(() => ({}));
-      const wait = Math.ceil(Number(j.retry_after || 1) * 1000);
-      if (attempt < 3) { await sleep(wait + 250); return apiFetch(token, path, opts, attempt + 1); }
-      throw new Error('触发限速，请稍后重试。');
+      const wait = j.retry_after ? Math.ceil(Number(j.retry_after) * 1000) : (Math.pow(2, attempt) * 1000);
+      if (attempt < 5) { await sleep(wait + 500); return apiFetch(token, path, opts, attempt + 1); }
+      throw new Error('触发限速且重试次数耗尽。');
     }
     if (!res.ok) { const b = await res.text().catch(() => ''); throw new Error(`API ${res.status}: ${b.slice(0, 120)}`); }
     return res.status === 204 ? null : res.json();
