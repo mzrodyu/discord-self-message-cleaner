@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Discord Self Message Cleaner",
+  "version": "0.1.0",
+  "description": "Batch-delete your own visible Discord messages from the current channel using browser-side UI automation.",
+  "author": "mzrodyu / catie",
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": ["https://discord.com/*"],
+  "action": {
+    "default_title": "Discord Self Message Cleaner",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://discord.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
