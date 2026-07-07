@@ -886,7 +886,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       const gid = root.getElementById('stat-guild').value.trim();
       const cid = root.getElementById('stat-channel').value.trim();
       if (gid) $('guildId').value = gid;
-      if (cid) $('channelId').value = cid;
+      $('channelId').value = cid;
       tabs[0].click();
       setStatus('准备就绪', '已同步 ID，请点击预览开始清理。');
     });
