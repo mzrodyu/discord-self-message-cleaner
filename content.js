@@ -95,8 +95,8 @@
         }
       }
       boundary = batch[batch.length - 1].id;
-      setStatus('预览中', `已找到 ${msgs.length} 条自己的消息…`);
-      await sleep(250);
+      setStatus('预览中', `扫描中... 已找到 ${msgs.length} 条。`);
+      await sleep(100);
     }
     return msgs;
   }
@@ -616,13 +616,15 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       try {
         const token = getToken();
         for (const m of st.previewed) {
+          const t0 = Date.now();
           await apiFetch(token, `/channels/${st.previewCtx.opts.channelId}/messages/${m.id}`, { method: 'DELETE' });
           done++;
           setStatus('删除中', `已删除 ${done}/${st.previewed.length} 条。`);
           
-          // 动态读取最新的间隔时间，允许中途调速
+          // 动态读取最新的间隔时间，并扣除网络请求耗时
           const currentDelay = Math.min(Math.max(Number($('delay').value) || 1600, 100), 30000);
-          await sleep(currentDelay);
+          const dt = Date.now() - t0;
+          if (dt < currentDelay) await sleep(currentDelay - dt);
         }
         renderMessages([]);
         st.previewCtx = null;
