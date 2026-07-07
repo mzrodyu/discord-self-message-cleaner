@@ -126,23 +126,24 @@
   /* ── CSS ── */
   const CSS = `
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-#panel{position:fixed;bottom:24px;right:24px;width:520px;height:480px;background:#1e1f22;border:1px solid #2b2d31;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.65);display:flex;flex-direction:column;z-index:2147483647;overflow:hidden;color:#dbdee1;font-size:13px}
+#panel{position:fixed;bottom:24px;right:24px;width:680px;height:580px;background:#1e1f22;border:1px solid #2b2d31;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.65);display:flex;flex-direction:column;z-index:2147483647;overflow:hidden;color:#dbdee1;font-size:13px}
 #panel.hidden{display:none}
 .panel-body{display:flex;flex:1;overflow:hidden;}
-.sidebar{width:130px;background:#111214;display:flex;flex-direction:column;padding:10px 0;border-right:1px solid #111214;}
-.tab-btn{padding:12px 15px;cursor:pointer;color:#949ba4;font-size:13px;font-weight:600;transition:all 0.2s;border-left:3px solid transparent;}
+.sidebar{width:150px;background:#111214;display:flex;flex-direction:column;padding:12px 0;border-right:1px solid #111214;}
+.tab-btn{padding:12px 16px;cursor:pointer;color:#949ba4;font-size:13px;font-weight:600;transition:all 0.2s;border-left:3px solid transparent;display:flex;align-items:center;gap:8px;}
+.tab-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 .tab-btn:hover{background:#1e1f22;color:#dbdee1;}
 .tab-btn.active{background:#1e1f22;color:#fff;border-left-color:#5865f2;}
-.content{flex:1;display:flex;flex-direction:column;overflow-y:auto;position:relative;}
-.content::-webkit-scrollbar{width:6px}
-.content::-webkit-scrollbar-thumb{background:#3c3f45;border-radius:6px}
-.tab-pane{display:none;flex-direction:column;}
-.tab-pane.active{display:flex;}
-.stat-card{background:#2b2d31;border-radius:6px;padding:15px;text-align:center;margin-bottom:15px;}
-.stat-num{font-size:32px;font-weight:bold;color:#5865f2;margin:10px 0;}
-.ph{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#2b2d31;cursor:grab;flex-shrink:0;border-bottom:1px solid #111214}
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;background:#2b2d31;}
+.tab-pane{display:none !important;flex-direction:column;flex:1;overflow-y:auto;padding:16px 20px;gap:12px;position:relative;}
+.tab-pane.active{display:flex !important;}
+.tab-pane::-webkit-scrollbar{width:6px}
+.tab-pane::-webkit-scrollbar-thumb{background:#3c3f45;border-radius:6px}
+.stat-card{background:#1e1f22;border-radius:8px;padding:24px;text-align:center;margin-bottom:15px;border:1px solid #111214;}
+.stat-num{font-size:48px;font-weight:bold;color:#5865f2;margin:12px 0;}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#2b2d31;cursor:grab;flex-shrink:0;border-bottom:1px solid #111214}
 .ph:active{cursor:grabbing}
-.pt{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:#f2f3f5}
+.pt{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:#f2f3f5}
 .pt svg{width:18px;height:18px;fill:none;stroke:#5865f2;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .xbtn{background:none;border:none;color:#80848e;cursor:pointer;padding:4px 6px;border-radius:6px;font-size:16px;line-height:1;display:flex;align-items:center}
 .xbtn:hover{color:#f2f3f5;background:#3c3f45}
@@ -219,13 +220,22 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
   
   <div class="panel-body">
     <div class="sidebar">
-      <div class="tab-btn active" data-tab="tab-basic">🗑️ 基础清理</div>
-      <div class="tab-btn" data-tab="tab-stats">📊 发言统计</div>
-      <div class="tab-btn" data-tab="tab-about">ℹ️ 关于工具</div>
+      <div class="tab-btn active" data-tab="tab-basic">
+        <svg viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+        基础清理
+      </div>
+      <div class="tab-btn" data-tab="tab-stats">
+        <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"></path></svg>
+        发言统计
+      </div>
+      <div class="tab-btn" data-tab="tab-about">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg>
+        关于工具
+      </div>
     </div>
     
     <div class="content">
-      <div id="tab-basic" class="tab-pane active pb">
+      <div id="tab-basic" class="tab-pane active">
     <div>
       <div class="fl">Discord Token</div>
       <div class="fr">
@@ -313,7 +323,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
     
       </div>
       
-      <div id="tab-stats" class="tab-pane pb">
+      <div id="tab-stats" class="tab-pane">
         <div class="g2">
           <div><div class="fl">服务器 ID</div><input id="stat-guild" type="text" placeholder="留空查私信"></div>
           <div><div class="fl">频道 ID</div><input id="stat-channel" type="text" placeholder="可选"></div>
@@ -331,7 +341,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
         <button class="bd" id="stat-del-btn" style="display:none;width:100%">将此作为目标进行清理</button>
       </div>
       
-      <div id="tab-about" class="tab-pane pb">
+      <div id="tab-about" class="tab-pane">
         <div class="about">
           作者: mzrodyu / catie<br>
           <a href="https://github.com/mzrodyu/discord-self-message-cleaner" target="_blank">View on GitHub</a>
