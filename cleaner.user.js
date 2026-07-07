@@ -723,12 +723,12 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       let meId = '1';
       try { meId = (await apiFetch(getToken(), '/users/@me')).id; } catch(e) { setStatus('错误', 'Token 无效'); return; }
       
-      let path = \`/guilds/\${gid}/messages/search?author_id=\${meId}\`;
+      let path = `/guilds/${gid}/messages/search?author_id=${meId}`;
       if (!gid || gid === '@me') {
         if (!cid) { setStatus('错误', '查私信请填写频道ID'); return; }
-        path = \`/channels/\${cid}/messages/search?author_id=\${meId}\`;
+        path = `/channels/${cid}/messages/search?author_id=${meId}`;
       } else if (cid) {
-        path += \`&channel_id=\${cid}\`;
+        path += `&channel_id=${cid}`;
       }
       
       root.getElementById('stat-result').innerText = '...';
@@ -736,7 +736,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       try {
         const res = await apiFetch(getToken(), path);
         root.getElementById('stat-result').innerText = res.total_results || 0;
-        setStatus('查询成功', \`找到 \${res.total_results} 条发言。\`);
+        setStatus('查询成功', `找到 ${res.total_results} 条发言。`);
         if (res.total_results > 0) root.getElementById('stat-del-btn').style.display = 'flex';
         else root.getElementById('stat-del-btn').style.display = 'none';
       } catch (e) {
