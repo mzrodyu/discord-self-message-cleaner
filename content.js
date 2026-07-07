@@ -276,7 +276,13 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
     
     <div class="g2">
       <div><div class="fl">起始时间</div><input id="after" type="datetime-local"></div>
-      <div><div class="fl">结束时间</div><input id="before" type="datetime-local"></div>
+      <div>
+        <div class="fl" style="display:flex; justify-content:space-between;">
+          <span>结束时间</span>
+          <span id="set-now" style="color:#00a8fc; cursor:pointer; text-transform:none;">同步最新</span>
+        </div>
+        <input id="before" type="datetime-local">
+      </div>
     </div>
     
     <div class="ck">
@@ -468,9 +474,21 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
     /* toggle main panel */
     function toggle() {
       panel.classList.toggle('hidden');
-      if (!panel.classList.contains('hidden')) tryAutoToken();
+      if (!panel.classList.contains('hidden')) {
+        tryAutoToken();
+        if (!$('before').value) syncNow();
+      }
     }
     $('close').addEventListener('click', () => panel.classList.add('hidden'));
+
+    /* sync time */
+    function syncNow() {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      $('before').value = now.toISOString().slice(0, 16);
+      save().catch(() => {});
+    }
+    $('set-now').addEventListener('click', syncNow);
 
     /* fill current */
     $('fill-cur').addEventListener('click', () => {
@@ -674,7 +692,9 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
     $('ui-stop').addEventListener('click', () => { st.stopRequested = true; setStatus('正在停止…', ''); });
 
     /* init */
-    restore().catch(() => {});
+    restore().then(() => {
+      if (!$('before').value) syncNow();
+    }).catch(() => {});
     tryAutoToken();
 
     /* expose toggle to message listener */
