@@ -437,7 +437,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       if (o.after) $('after').value = o.after;
       if (o.before) $('before').value = o.before;
       if (o.order) {
-        const radio = root.querySelector(\`input[name="order"][value="\${o.order}"]\`);
+        const radio = root.querySelector(`input[name="order"][value="${o.order}"]`);
         if (radio) radio.checked = true;
       }
     }
@@ -528,7 +528,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
           if (it.id === '@me') {
             iconHtml = '💬';
           } else if (it.icon) {
-            iconHtml = \`<img src="https://cdn.discordapp.com/icons/\${it.id}/\${it.icon}.png?size=64">\`;
+            iconHtml = `<img src="https://cdn.discordapp.com/icons/${it.id}/${it.icon}.png?size=64">`;
           } else {
             iconHtml = it.name.charAt(0);
           }
@@ -540,13 +540,13 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
           if (it.type === 3) iconHtml = '👥'; // Group DM
         }
 
-        div.innerHTML = \`
-          <div class="pk-icon">\${iconHtml}</div>
+        div.innerHTML = `
+          <div class="pk-icon">${iconHtml}</div>
           <div style="min-width:0;flex:1;">
-            <div class="pk-name">\${it.name || '未命名'}</div>
-            <div class="pk-type">\${it.id}</div>
+            <div class="pk-name">${it.name || '未命名'}</div>
+            <div class="pk-type">${it.id}</div>
           </div>
-        \`;
+        `;
 
         div.addEventListener('click', () => {
           if (type === 'guilds') {
@@ -556,7 +556,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
             $('guildId').value = pkCurrentGuild.id;
             $('channelId').value = it.id;
             save().catch(()=>{});
-            setStatus('已选择', \`[\${pkCurrentGuild.name}] -> [\${it.name}]\`);
+            setStatus('已选择', `[${pkCurrentGuild.name}] -> [${it.name}]`);
             closePicker();
           }
         });
@@ -577,7 +577,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
         const list = [{ id: '@me', name: '私信与群聊 (DMs)' }, ...guilds];
         renderList(list, 'guilds');
       } catch (e) {
-        pkList.innerHTML = \`<div class="pk-empty" style="color:#ed4245">加载失败: \${e.message}</div>\`;
+        pkList.innerHTML = `<div class="pk-empty" style="color:#ed4245">加载失败: ${e.message}</div>`;
       }
     }
 
@@ -600,7 +600,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
             return { id: c.id, name: name || '未知私聊', type: c.type };
           });
         } else {
-          const rawChannels = await apiFetch(token, \`/guilds/\${guildId}/channels\`);
+          const rawChannels = await apiFetch(token, `/guilds/${guildId}/channels`);
           // Filter out categories (type 4)
           channels = rawChannels.filter(c => c.type !== 4).map(c => ({
             id: c.id, name: c.name, type: c.type
@@ -608,7 +608,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
         }
         renderList(channels, 'channels');
       } catch (e) {
-        pkList.innerHTML = \`<div class="pk-empty" style="color:#ed4245">加载失败: \${e.message}</div>\`;
+        pkList.innerHTML = `<div class="pk-empty" style="color:#ed4245">加载失败: ${e.message}</div>`;
       }
     }
     /* --- End Picker Logic --- */
@@ -623,7 +623,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
         await save();
         setStatus('校验中', '正在验证账号和频道…');
         const me = await apiFetch(token, '/users/@me');
-        const ch = await apiFetch(token, \`/channels/\${opts.channelId}\`);
+        const ch = await apiFetch(token, `/channels/${opts.channelId}`);
         
         // 只有不是私信时才校验 guild_id
         if (opts.guildId !== '@me' && String(ch.guild_id || '') !== opts.guildId) {
@@ -631,12 +631,12 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
         }
 
         const dirStr = opts.order === 'asc' ? '从老到新' : '从新到老';
-        setStatus('预览中', \`账号 \${me.username}，频道 \${ch.name || opts.channelId} (\${dirStr})\`);
+        setStatus('预览中', `账号 ${me.username}，频道 ${ch.name || opts.channelId} (${dirStr})`);
         
         const msgs = await collectMessages(token, opts, me.id, setStatus);
         st.previewCtx = { opts, meId: me.id };
         renderMessages(msgs);
-        setStatus('预览完成', \`找到 \${msgs.length} 条符合条件的消息。\`);
+        setStatus('预览完成', `找到 ${msgs.length} 条符合条件的消息。`);
       } catch (e) { setStatus('失败', e.message); }
       finally { $('preview-btn').disabled = false; }
     });
@@ -645,21 +645,21 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
     $('delete-btn').addEventListener('click', async () => {
       if (st.deleting) return;
       if (!st.previewCtx || !st.previewed.length) { setStatus('请先预览', ''); return; }
-      if (!confirm(\`将删除 \${st.previewed.length} 条消息，删除不可恢复，确认继续？\`)) return;
+      if (!confirm(`将删除 ${st.previewed.length} 条消息，删除不可恢复，确认继续？`)) return;
       st.deleting = true;
       $('preview-btn').disabled = true; $('delete-btn').disabled = true;
       let done = 0;
       try {
         const token = getToken();
         for (const m of st.previewed) {
-          await apiFetch(token, \`/channels/\${st.previewCtx.opts.channelId}/messages/\${m.id}\`, { method: 'DELETE' });
+          await apiFetch(token, `/channels/${st.previewCtx.opts.channelId}/messages/${m.id}`, { method: 'DELETE' });
           done++;
-          setStatus('删除中', \`已删除 \${done}/\${st.previewed.length} 条。\`);
+          setStatus('删除中', `已删除 ${done}/${st.previewed.length} 条。`);
           await sleep(st.previewCtx.opts.delayMs);
         }
         renderMessages([]);
         st.previewCtx = null;
-        setStatus('完成', \`已删除 \${done} 条消息。\`);
+        setStatus('完成', `已删除 ${done} 条消息。`);
       } catch (e) { setStatus('失败', e.message); }
       finally { st.deleting = false; $('preview-btn').disabled = false; }
     });
