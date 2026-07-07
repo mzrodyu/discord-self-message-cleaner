@@ -1,5 +1,7 @@
 # Discord 自助冲水机 (Discord Self Message Cleaner)
 
+[![Install](https://img.shields.io/badge/Tampermonkey-一键安装脚本-success?style=for-the-badge&logo=tampermonkey)](https://raw.githubusercontent.com/mzrodyu/discord-self-message-cleaner/main/cleaner.user.js)
+
 **作者**: mzrodyu / catie
 
 这是一个用于自动、批量删除 Discord 中自己历史消息的 Chrome 扩展。
