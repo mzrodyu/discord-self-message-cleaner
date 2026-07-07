@@ -325,7 +325,18 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       
       <div id="tab-stats" class="tab-pane">
         <div class="g2">
-          <div><div class="fl">服务器 ID</div><input id="stat-guild" type="text" placeholder="留空查私信"></div>
+          <div>
+            <div class="fl">服务器 ID</div>
+            <div class="fr">
+              <input id="stat-guild" type="text" placeholder="留空查私信">
+              <button class="bs bsm" id="stat-btn-picker" title="从列表选择">
+                <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>列表
+              </button>
+              <button class="bs bsm" id="stat-fill-cur" title="填入当前页面ID">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>当前
+              </button>
+            </div>
+          </div>
           <div><div class="fl">频道 ID</div><input id="stat-channel" type="text" placeholder="可选"></div>
         </div>
         <div class="div" style="margin:12px 0"></div>
@@ -522,6 +533,13 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       setStatus('已填充', '已从当前 URL 读取 ID。');
     });
 
+    $('stat-fill-cur').addEventListener('click', () => {
+      const m = location.pathname.match(/\/channels\/(\d{15,25}|@me)\/(\d{15,25})/);
+      if (!m) { setStatus('无法填充', '当前不在具体的频道/私信页面。'); return; }
+      $('stat-guild').value = m[1]; $('stat-channel').value = m[2];
+      setStatus('已填充', '已从当前 URL 读取 ID。');
+    });
+
     /* auto token button */
     $('auto-tok').addEventListener('click', () => {
       const tok = extractToken();
@@ -536,8 +554,10 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
     const pkBack = $('pk-back');
     let pkState = 'guilds'; // 'guilds' | 'channels'
     let pkCurrentGuild = null; // { id, name }
+    let pkTarget = 'basic'; // 'basic' | 'stats'
 
-    function openPicker() {
+    function openPicker(target = 'basic') {
+      pkTarget = target;
       picker.classList.remove('hidden');
       loadGuilds();
     }
@@ -547,7 +567,10 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
     }
 
     $('btn-picker').addEventListener('click', () => {
-      try { getToken(); openPicker(); } catch (e) { setStatus('需要 Token', e.message); }
+      try { getToken(); openPicker('basic'); } catch (e) { setStatus('需要 Token', e.message); }
+    });
+    $('stat-btn-picker').addEventListener('click', () => {
+      try { getToken(); openPicker('stats'); } catch (e) { setStatus('需要 Token', e.message); }
     });
     $('pk-close').addEventListener('click', closePicker);
     pkBack.addEventListener('click', () => {
@@ -594,9 +617,14 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
             loadChannels(it.id, it.name);
           } else {
             // Picked channel
-            $('guildId').value = pkCurrentGuild.id;
-            $('channelId').value = it.id;
-            save().catch(()=>{});
+            if (pkTarget === 'basic') {
+              $('guildId').value = pkCurrentGuild.id;
+              $('channelId').value = it.id;
+              save().catch(()=>{});
+            } else {
+              $('stat-guild').value = pkCurrentGuild.id;
+              $('stat-channel').value = it.id;
+            }
             setStatus('已选择', `[${pkCurrentGuild.name}] -> [${it.name}]`);
             closePicker();
           }
@@ -762,6 +790,11 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       tabs[0].click();
       setStatus('准备就绪', '已同步 ID，请点击预览开始清理。');
     });
+
+    // Prevent Discord from capturing keypresses inside our inputs
+    root.addEventListener('keydown', e => e.stopPropagation());
+    root.addEventListener('keyup', e => e.stopPropagation());
+    root.addEventListener('keypress', e => e.stopPropagation());
 
     /* init */
     restore().then(() => {
