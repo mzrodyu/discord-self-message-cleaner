@@ -1,3 +1,17 @@
+// ==UserScript==
+// @name         Discord 自助冲水机 (Discord Self Message Cleaner)
+// @namespace    http://tampermonkey.net/
+// @version      0.4.0
+// @description  自动获取Token，批量删除Discord历史消息，支持倒序和自定义限速。
+// @author       mzrodyu / catie
+// @match        https://discord.com/*
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=discord.com
+// @grant        GM_registerMenuCommand
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @license      MIT
+// ==/UserScript==
+
 /* Discord Self Message Cleaner – floating panel injected into Discord */
 (function () {
   'use strict';
@@ -378,6 +392,8 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       };
       if (typeof chrome !== 'undefined' && chrome.storage?.local) {
         await chrome.storage.local.set({ cleanerOpts: data }).catch(() => {});
+      } else if (typeof GM_setValue !== 'undefined') {
+        GM_setValue('cleanerOpts', JSON.stringify(data));
       } else {
         localStorage.setItem('cleanerOpts', JSON.stringify(data));
       }
@@ -387,6 +403,8 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       if (typeof chrome !== 'undefined' && chrome.storage?.local) {
         const res = await chrome.storage.local.get('cleanerOpts').catch(() => ({}));
         o = res.cleanerOpts || {};
+      } else if (typeof GM_getValue !== 'undefined') {
+        try { o = JSON.parse(GM_getValue('cleanerOpts', '{}')); } catch (e) {}
       } else {
         try { o = JSON.parse(localStorage.getItem('cleanerOpts') || '{}'); } catch (e) {}
       }
@@ -655,7 +673,7 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
     root._toggle = toggle;
   }
 
-  /* ── message listener ── */
+  /* ── message listener & monkey menu ── */
   if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
     chrome.runtime.onMessage.addListener((msg, _sender, respond) => {
       if (msg?.type === 'TOGGLE_PANEL') {
@@ -673,6 +691,21 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
         return false;
       }
       return false;
+    });
+  }
+
+  if (typeof GM_registerMenuCommand !== 'undefined') {
+    GM_registerMenuCommand('显示/隐藏 冲水面板', () => {
+      const host = document.getElementById(HOST_ID);
+      if (host?.shadowRoot?._toggle) {
+        host.shadowRoot._toggle();
+      } else {
+        inject();
+        setTimeout(() => {
+          const h = document.getElementById(HOST_ID);
+          if (h?.shadowRoot?._toggle) h.shadowRoot._toggle();
+        }, 100);
+      }
     });
   }
 

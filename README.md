@@ -8,13 +8,22 @@
 
 ## 安装
 
-支持 Chrome, Edge, Brave 等所有 Chromium 内核浏览器。
+本工具支持两种安装方式：你可以把它当作 **Chrome 扩展** 安装，也可以当作 **油猴 (Tampermonkey) 脚本** 安装，两者功能完全一致，代码同步更新！
+
+### 方式一：油猴脚本安装（最推荐、适合小白）
+
+1. 确保你的浏览器已经安装了 [Tampermonkey](https://www.tampermonkey.net/) 插件。
+2. **[点击这里一键安装](https://raw.githubusercontent.com/mzrodyu/discord-self-message-cleaner/main/cleaner.user.js)**。
+3. 浏览器会自动弹出油猴的安装界面，点击「安装」即可。
+4. 在 Discord 网页版，点击右上角油猴图标 -> 展开本脚本菜单 -> 点击 **「显示/隐藏 冲水面板」**。
+
+### 方式二：Chrome 扩展本地安装（适合开发者）
 
 1. 把这个项目下载或 clone 到你的电脑上。
-2. 打开浏览器的扩展管理页面 (Chrome 浏览器输入 chrome://extensions/)。
+2. 打开浏览器的扩展管理页面 (Chrome 浏览器输入 `chrome://extensions/`)。
 3. 打开右上角的「开发者模式」。
-4. 点击「加载已解压的扩展程序」，选择你下载的文件夹（包含 manifest.json 文件）。
-5. 在 Discord 网页版点击右上角插件栏的图标即可弹出悬浮面板。
+4. 点击「加载已解压的扩展程序」，选择你下载的文件夹（包含 `manifest.json` 文件）。
+5. 在 Discord 网页版点击右上角插件栏的本工具图标即可弹出悬浮面板。
 
 ---
 
