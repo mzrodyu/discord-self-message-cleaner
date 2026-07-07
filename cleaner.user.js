@@ -126,8 +126,20 @@
   /* ── CSS ── */
   const CSS = `
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-#panel{position:fixed;bottom:24px;right:24px;width:380px;height:85vh;max-height:800px;background:#1e1f22;border:1px solid #2b2d31;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.65);display:flex;flex-direction:column;z-index:2147483647;overflow:hidden;color:#dbdee1;font-size:13px}
+#panel{position:fixed;bottom:24px;right:24px;width:520px;height:480px;background:#1e1f22;border:1px solid #2b2d31;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.65);display:flex;flex-direction:column;z-index:2147483647;overflow:hidden;color:#dbdee1;font-size:13px}
 #panel.hidden{display:none}
+.panel-body{display:flex;flex:1;overflow:hidden;}
+.sidebar{width:130px;background:#111214;display:flex;flex-direction:column;padding:10px 0;border-right:1px solid #111214;}
+.tab-btn{padding:12px 15px;cursor:pointer;color:#949ba4;font-size:13px;font-weight:600;transition:all 0.2s;border-left:3px solid transparent;}
+.tab-btn:hover{background:#1e1f22;color:#dbdee1;}
+.tab-btn.active{background:#1e1f22;color:#fff;border-left-color:#5865f2;}
+.content{flex:1;display:flex;flex-direction:column;overflow-y:auto;position:relative;}
+.content::-webkit-scrollbar{width:6px}
+.content::-webkit-scrollbar-thumb{background:#3c3f45;border-radius:6px}
+.tab-pane{display:none;flex-direction:column;}
+.tab-pane.active{display:flex;}
+.stat-card{background:#2b2d31;border-radius:6px;padding:15px;text-align:center;margin-bottom:15px;}
+.stat-num{font-size:32px;font-weight:bold;color:#5865f2;margin:10px 0;}
 .ph{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#2b2d31;cursor:grab;flex-shrink:0;border-bottom:1px solid #111214}
 .ph:active{cursor:grabbing}
 .pt{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:#f2f3f5}
@@ -205,7 +217,15 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
     <button class="xbtn" id="close">✕</button>
   </div>
   
-  <div class="pb">
+  <div class="panel-body">
+    <div class="sidebar">
+      <div class="tab-btn active" data-tab="tab-basic">🗑️ 基础清理</div>
+      <div class="tab-btn" data-tab="tab-stats">📊 发言统计</div>
+      <div class="tab-btn" data-tab="tab-about">ℹ️ 关于工具</div>
+    </div>
+    
+    <div class="content">
+      <div id="tab-basic" class="tab-pane active pb">
     <div>
       <div class="fl">Discord Token</div>
       <div class="fr">
@@ -291,12 +311,33 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
       <ul class="rl" id="messages"></ul>
     </div>
     
-    <div class="div" style="margin-top:10px"></div>
-    <div class="about">
-      作者: mzrodyu / catie<br>
-      <a href="https://github.com/mzrodyu/discord-self-message-cleaner" target="_blank">View on GitHub</a>
+      </div>
+      
+      <div id="tab-stats" class="tab-pane pb">
+        <div class="g2">
+          <div><div class="fl">服务器 ID</div><input id="stat-guild" type="text" placeholder="留空查私信"></div>
+          <div><div class="fl">频道 ID</div><input id="stat-channel" type="text" placeholder="可选"></div>
+        </div>
+        <div class="div" style="margin:12px 0"></div>
+        <button class="bp" id="stat-btn">
+          <svg viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>查询总发言量
+        </button>
+        
+        <div class="stat-card" style="margin-top:15px;">
+          <div style="font-size:13px;color:#949ba4;">当前范围总发言数</div>
+          <div class="stat-num" id="stat-result">-</div>
+          <div style="font-size:11px;color:#80848e;">*调用高级检索接口，可能受风控影响。</div>
+        </div>
+        <button class="bd" id="stat-del-btn" style="display:none;width:100%">将此作为目标进行清理</button>
+      </div>
+      
+      <div id="tab-about" class="tab-pane pb">
+        <div class="about">
+          作者: mzrodyu / catie<br>
+          <a href="https://github.com/mzrodyu/discord-self-message-cleaner" target="_blank">View on GitHub</a>
+        </div>
+      </div>
     </div>
-
   </div>
 
   <!-- Picker Overlay -->
@@ -661,6 +702,55 @@ button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;s
         setStatus('完成', `已删除 ${done} 条消息。`);
       } catch (e) { setStatus('失败', e.message); }
       finally { st.deleting = false; $('preview-btn').disabled = false; }
+    });
+
+    /* Tab logic */
+    const tabs = root.querySelectorAll('.tab-btn');
+    const panes = root.querySelectorAll('.tab-pane');
+    tabs.forEach(t => {
+      t.addEventListener('click', () => {
+        tabs.forEach(x => x.classList.remove('active'));
+        panes.forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        root.getElementById(t.dataset.tab).classList.add('active');
+      });
+    });
+    
+    /* Stat logic */
+    $('stat-btn').addEventListener('click', async () => {
+      const gid = root.getElementById('stat-guild').value.trim();
+      const cid = root.getElementById('stat-channel').value.trim();
+      let meId = '1';
+      try { meId = (await apiFetch(getToken(), '/users/@me')).id; } catch(e) { setStatus('错误', 'Token 无效'); return; }
+      
+      let path = \`/guilds/\${gid}/messages/search?author_id=\${meId}\`;
+      if (!gid || gid === '@me') {
+        if (!cid) { setStatus('错误', '查私信请填写频道ID'); return; }
+        path = \`/channels/\${cid}/messages/search?author_id=\${meId}\`;
+      } else if (cid) {
+        path += \`&channel_id=\${cid}\`;
+      }
+      
+      root.getElementById('stat-result').innerText = '...';
+      setStatus('查询中', '正在调用高级检索接口...');
+      try {
+        const res = await apiFetch(getToken(), path);
+        root.getElementById('stat-result').innerText = res.total_results || 0;
+        setStatus('查询成功', \`找到 \${res.total_results} 条发言。\`);
+        if (res.total_results > 0) root.getElementById('stat-del-btn').style.display = 'flex';
+        else root.getElementById('stat-del-btn').style.display = 'none';
+      } catch (e) {
+        setStatus('查询失败', e.message);
+      }
+    });
+
+    $('stat-del-btn').addEventListener('click', () => {
+      const gid = root.getElementById('stat-guild').value.trim();
+      const cid = root.getElementById('stat-channel').value.trim();
+      if (gid) $('guildId').value = gid;
+      if (cid) $('channelId').value = cid;
+      tabs[0].click();
+      setStatus('准备就绪', '已同步 ID，请点击预览开始清理。');
     });
 
     /* init */
