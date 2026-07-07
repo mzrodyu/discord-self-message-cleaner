@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Discord 自助冲水机 (Discord Self Message Cleaner)
 // @namespace    http://tampermonkey.net/
-// @version      0.4.0
+// @version      0.5.0
 // @description  自动获取Token，批量删除Discord历史消息，支持倒序和自定义限速。
 // @author       mzrodyu / catie
 // @match        https://discord.com/*

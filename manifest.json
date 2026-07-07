@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Discord Self Message Cleaner",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "description": "Batch-delete your own Discord messages. Floating panel injected into Discord.",
   "author": "mzrodyu / catie",
   "permissions": ["activeTab", "storage", "tabs"],
